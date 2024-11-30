@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Filter Multi-Database Pencarian Excel</title>
+  <style>
+    /* Styling seperti sebelumnya */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #007bff;
+      margin-bottom: 20px;
+    }
+    #addDatabaseBtn {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      font-size: 16px;
+      color: white;
+      background-color: #28a745;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #addDatabaseBtn:hover {
+      background-color: #218838;
+    }
+    #searchBox {
+      display: block;
+      width: 80%;
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .file-container {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      padding: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .database-label {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #343a40;
+    }
+    .remove-btn {
+      float: right;
+      padding: 5px 15px;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .remove-btn:hover {
+      background-color: #c82333;
+    }
+    .database-controls {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .database-controls div {
+      display: flex;
+      align-items: center;
+      padding: 5px 10px;
+      background-color: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .database-controls label {
+      margin-left: 5px;
+    }
+    #resultsContainer {
+      margin-top: 30px;
+    }
+    .database-label-result {
+      font-size: 16px;
+      font-weight: bold;
+      color: #007bff;
+      margin-bottom: 15px;
+      margin-top: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: white;
+      border-radius: 5px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    table th, table td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    table th {
+      background-color: #007bff;
+      color: white;
+    }
+    table tbody tr:hover {
+      background-color: #f1f1f1;
+    }
+  </style>
+</head>
+<body>
+  <h1>Filter Multi-Database Pencarian Excel</h1>
+  <button id="addDatabaseBtn">Tambahkan Database</button>
+  <input type="text" id="searchBox" placeholder="Ketik untuk mencari...">
+  <div id="databasesContainer"></div>
+  <div id="resultsContainer"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    const databasesContainer = document.getElementById('databasesContainer');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const searchBox = document.getElementById('searchBox');
+    const addDatabaseBtn = document.getElementById('addDatabaseBtn');
+
+    let databaseIndex = 0; // Index untuk melacak file yang diunggah
+    let databases = {}; // Objek untuk menyimpan semua file dan datanya
+
+    addDatabaseBtn.addEventListener('click', () => {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.xlsx, .xls';
+      fileInput.style.display = 'none';
+      fileInput.addEventListener('change', (event) => handleFile(event, databaseIndex++));
+      fileInput.click();
+    });
+
+    function handleFile(event, dbIndex) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const dataArray = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(dataArray, { type: 'array' });
+
+        // Tambahkan data file baru ke databases
+        databases[dbIndex] = {
+          fileName: file.name,
+          sheetsData: {},
+          activeSheets: []
+        };
+
+        // Simpan data dari setiap sheet
+        workbook.SheetNames.forEach(sheetName => {
+          const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+          databases[dbIndex].sheetsData[sheetName] = sheetData;
+        });
+
+        renderDatabaseControls();
+        renderSearchResults(); // Pastikan hasil pencarian diperbarui
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function renderDatabaseControls() {
+      databasesContainer.innerHTML = ''; // Reset tampilan database
+
+      Object.keys(databases).forEach(dbIndex => {
+        const db = databases[dbIndex];
+
+        const dbContainer = document.createElement('div');
+        dbContainer.className = 'file-container';
+
+        const dbLabel = document.createElement('div');
+        dbLabel.className = 'database-label';
+        dbLabel.textContent = `File: ${db.fileName}`;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-btn';
+        removeBtn.textContent = 'Remove';
+        removeBtn.addEventListener('click', () => {
+          delete databases[dbIndex];
+          renderDatabaseControls();
+          renderSearchResults();
+        });
+
+        const sheetControls = document.createElement('div');
+        sheetControls.className = 'database-controls';
+
+        Object.keys(db.sheetsData).forEach(sheetName => {
+          const sheetControl = document.createElement('div');
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.id = `sheet-${dbIndex}-${sheetName}`;
+          checkbox.dataset.dbIndex = dbIndex;
+          checkbox.dataset.sheetName = sheetName;
+
+          // Pastikan checkbox status sinkron dengan data yang aktif
+          checkbox.checked = databases[dbIndex].activeSheets.includes(sheetName);
+
+          checkbox.addEventListener('change', handleSheetToggle);
+
+          const label = document.createElement('label');
+          label.setAttribute('for', `sheet-${dbIndex}-${sheetName}`);
+          label.textContent = sheetName;
+
+          sheetControl.appendChild(checkbox);
+          sheetControl.appendChild(label);
+          sheetControls.appendChild(sheetControl);
+        });
+
+        dbContainer.appendChild(dbLabel);
+        dbContainer.appendChild(removeBtn);
+        dbContainer.appendChild(sheetControls);
+        databasesContainer.appendChild(dbContainer);
+      });
+    }
+
+    function handleSheetToggle(event) {
+      const dbIndex = event.target.dataset.dbIndex;
+      const sheetName = event.target.dataset.sheetName;
+
+      if (event.target.checked) {
+        // Tambahkan sheet ke daftar aktif
+        databases[dbIndex].activeSheets.push(sheetName);
+      } else {
+        // Hapus sheet dari daftar aktif
+        databases[dbIndex].activeSheets = databases[dbIndex].activeSheets.filter(name => name !== sheetName);
+      }
+
+      renderSearchResults();
+    }
+
+    function renderSearchResults() {
+      const keyword = searchBox.value.toLowerCase().trim();
+      resultsContainer.innerHTML = ''; // Reset hasil
+
+      Object.keys(databases).forEach(dbIndex => {
+        const db = databases[dbIndex];
+
+        db.activeSheets.forEach(sheetName => {
+          const data = db.sheetsData[sheetName];
+          const filteredData = data.filter((row, index) => {
+            if (index === 0) return true; // Header tetap muncul
+            return keyword ? row.some(cell => String(cell).toLowerCase().includes(keyword)) : true;
+          });
+
+          if (filteredData.length > 0) {
+            const sheetLabel = document.createElement('div');
+            sheetLabel.className = 'database-label-result';
+            sheetLabel.textContent = `File: ${db.fileName}, Sheet: ${sheetName}`;
+            resultsContainer.appendChild(sheetLabel);
+
+            const table = createTable(filteredData);
+            resultsContainer.appendChild(table);
+          }
+        });
+      });
+    }
+
+    function createTable(data) {
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      const tbody = document.createElement('tbody');
+
+      if (data.length > 0) {
+        // Header
+        const headerRow = document.createElement('tr');
+        data[0].forEach(header => {
+          const th = document.createElement('th');
+          th.textContent = header;
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+
+        // Data
+        data.slice(1).forEach(row => {
+          const tr = document.createElement('tr');
+          row.forEach(cell => {
+            const td = document.createElement('td');
+            td.textContent = cell;
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      }
+
+      table.appendChild(thead);
+      table.appendChild(tbody);
+      return table;
+    }
+
+    searchBox.addEventListener('input', renderSearchResults);
+  </script>
+</body>
+</html>
