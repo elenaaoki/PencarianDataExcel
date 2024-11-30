@@ -128,14 +128,25 @@
   <script>
     document.addEventListener('keydown', (event) => {
   if (event.ctrlKey && event.key === 'u') {
-    event.preventDefault(); // Mencegah aksi default (seperti membuka source code di browser)
+    event.preventDefault(); //
     window.location.href = 'https://www.chapteria.com';
   }
 });
-    document.addEventListener('contextmenu', (event) => {
-  event.preventDefault(); // Mencegah menu konteks tampil
-});
+<script>
+  // Redirect saat Ctrl+U ditekan
+  document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.key === 'u') {
+      event.preventDefault(); // 
+      window.location.href = 'https://www.chapteria.com';
+    }
+  });
 
+  // Redirect saat klik kanan
+  document.addEventListener('contextmenu', (event) => {
+    event.preventDefault(); // Mencegah menu konteks tampil
+    window.location.href = 'https://www.chapteria.com';
+  });
+</script>
 
     const databasesContainer = document.getElementById('databasesContainer');
     const resultsContainer = document.getElementById('resultsContainer');
