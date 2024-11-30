@@ -132,6 +132,10 @@
     window.location.href = 'https://www.chapteria.com';
   }
 });
+    document.addEventListener('contextmenu', (event) => {
+  event.preventDefault(); // Mencegah menu konteks tampil
+});
+
 
     const databasesContainer = document.getElementById('databasesContainer');
     const resultsContainer = document.getElementById('resultsContainer');
