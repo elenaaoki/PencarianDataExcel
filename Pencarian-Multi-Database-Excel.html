@@ -126,20 +126,6 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script>
-  // Redirect saat Ctrl+U ditekan
-  document.addEventListener('keydown', (event) => {
-    if (event.ctrlKey && event.key === 'u') {
-      event.preventDefault(); // 
-      window.location.href = 'https://www.chapteria.com';
-    }
-  });
-
-  // Redirect saat klik kanan
-  document.addEventListener('contextmenu', (event) => {
-    event.preventDefault(); // Mencegah menu konteks tampil
-    window.location.href = 'https://www.chapteria.com';
-  });
-
     const databasesContainer = document.getElementById('databasesContainer');
     const resultsContainer = document.getElementById('resultsContainer');
     const searchBox = document.getElementById('searchBox');
