@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Filter Multi-Database Pencarian Excel</title>
   <style>
-    /* Styling seperti sebelumnya */
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
@@ -131,8 +130,8 @@
     const searchBox = document.getElementById('searchBox');
     const addDatabaseBtn = document.getElementById('addDatabaseBtn');
 
-    let databaseIndex = 0; // Index untuk melacak file yang diunggah
-    let databases = {}; // Objek untuk menyimpan semua file dan datanya
+    let databaseIndex = 0;
+    let databases = {};
 
     addDatabaseBtn.addEventListener('click', () => {
       const fileInput = document.createElement('input');
@@ -152,27 +151,25 @@
         const dataArray = new Uint8Array(e.target.result);
         const workbook = XLSX.read(dataArray, { type: 'array' });
 
-        // Tambahkan data file baru ke databases
         databases[dbIndex] = {
           fileName: file.name,
           sheetsData: {},
           activeSheets: []
         };
 
-        // Simpan data dari setiap sheet
         workbook.SheetNames.forEach(sheetName => {
           const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
           databases[dbIndex].sheetsData[sheetName] = sheetData;
         });
 
         renderDatabaseControls();
-        renderSearchResults(); // Pastikan hasil pencarian diperbarui
+        renderSearchResults();
       };
       reader.readAsArrayBuffer(file);
     }
 
     function renderDatabaseControls() {
-      databasesContainer.innerHTML = ''; // Reset tampilan database
+      databasesContainer.innerHTML = '';
 
       Object.keys(databases).forEach(dbIndex => {
         const db = databases[dbIndex];
@@ -205,7 +202,6 @@
           checkbox.dataset.dbIndex = dbIndex;
           checkbox.dataset.sheetName = sheetName;
 
-          // Pastikan checkbox status sinkron dengan data yang aktif
           checkbox.checked = databases[dbIndex].activeSheets.includes(sheetName);
 
           checkbox.addEventListener('change', handleSheetToggle);
@@ -231,10 +227,8 @@
       const sheetName = event.target.dataset.sheetName;
 
       if (event.target.checked) {
-        // Tambahkan sheet ke daftar aktif
         databases[dbIndex].activeSheets.push(sheetName);
       } else {
-        // Hapus sheet dari daftar aktif
         databases[dbIndex].activeSheets = databases[dbIndex].activeSheets.filter(name => name !== sheetName);
       }
 
@@ -243,7 +237,7 @@
 
     function renderSearchResults() {
       const keyword = searchBox.value.toLowerCase().trim();
-      resultsContainer.innerHTML = ''; // Reset hasil
+      resultsContainer.innerHTML = '';
 
       Object.keys(databases).forEach(dbIndex => {
         const db = databases[dbIndex];
@@ -251,19 +245,17 @@
         db.activeSheets.forEach(sheetName => {
           const data = db.sheetsData[sheetName];
           const filteredData = data.filter((row, index) => {
-            if (index === 0) return true; // Header tetap muncul
+            if (index === 0) return true;
             return keyword ? row.some(cell => String(cell).toLowerCase().includes(keyword)) : true;
           });
 
-          if (filteredData.length > 0) {
-            const sheetLabel = document.createElement('div');
-            sheetLabel.className = 'database-label-result';
-            sheetLabel.textContent = `File: ${db.fileName}, Sheet: ${sheetName}`;
-            resultsContainer.appendChild(sheetLabel);
+          const sheetLabel = document.createElement('div');
+          sheetLabel.className = 'database-label-result';
+          sheetLabel.textContent = `File: ${db.fileName}, Sheet: ${sheetName}`;
+          resultsContainer.appendChild(sheetLabel);
 
-            const table = createTable(filteredData);
-            resultsContainer.appendChild(table);
-          }
+          const table = createTable(filteredData);
+          resultsContainer.appendChild(table);
         });
       });
     }
@@ -278,7 +270,7 @@
         const headerRow = document.createElement('tr');
         data[0].forEach(header => {
           const th = document.createElement('th');
-          th.textContent = header;
+          th.textContent = header !== undefined ? header : '';
           headerRow.appendChild(th);
         });
         thead.appendChild(headerRow);
@@ -286,13 +278,22 @@
         // Data
         data.slice(1).forEach(row => {
           const tr = document.createElement('tr');
-          row.forEach(cell => {
+          data[0].forEach((_, index) => {
             const td = document.createElement('td');
-            td.textContent = cell;
+            td.textContent = row[index] !== undefined ? row[index] : '';
             tr.appendChild(td);
           });
           tbody.appendChild(tr);
         });
+      } else {
+        // If no data, create an empty row with a message
+        const emptyRow = document.createElement('tr');
+        const emptyCell = document.createElement('td');
+        emptyCell.textContent = 'Tidak ada data yang sesuai dengan pencarian';
+        emptyCell.colSpan = data[0] ? data[0].length : 1;
+        emptyCell.style.textAlign = 'center';
+        emptyRow.appendChild(emptyCell);
+        tbody.appendChild(emptyRow);
       }
 
       table.appendChild(thead);
