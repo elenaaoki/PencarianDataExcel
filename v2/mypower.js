@@ -164,7 +164,7 @@
         
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
-        removeBtn.textContent = 'Hapus';
+        removeBtn.textContent = '✖';
         removeBtn.addEventListener('click', () => {
           delete databases[dbIndex];
           renderDatabaseControls();
