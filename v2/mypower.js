@@ -43,7 +43,7 @@
     function copyToClipboard(text, element) {
       navigator.clipboard.writeText(text).then(() => {
         showToast('Teks berhasil disalin!');
-        element.textContent = 'Tersalin!';
+        element.textContent = 'Disalin!';
         setTimeout(() => {
           element.textContent = 'Salin';
         }, 2000);
